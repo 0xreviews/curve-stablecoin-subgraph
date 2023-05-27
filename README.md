@@ -1,13 +1,23 @@
-# Curve-Stablecoin-subgraph
+# Curve Stablecoin subgraph
 
-## Quick Start
+## Get Started
+
+install
 
 ```sh
 npm install
 ```
 
+deploy to TheGraph hosted-service
+
 ```sh
 npm run auto-deploy
+```
+
+test graph data by on-chain data.
+
+```sh
+npm run test
 ```
 
 ## Example Query
@@ -25,10 +35,10 @@ npm run auto-deploy
       user
       n1
       n2
-      ticks(orderBy: index) {
-        index
-        share
-      }
+      # ticks(orderBy: index) {
+      #   index
+      #   share
+      # }
     }
   }
   detailedTrades(first: 5, orderBy: timestamp, orderDirection: desc) {
@@ -50,9 +60,9 @@ npm run auto-deploy
     index
     x
     y
-    providers {
-      user
-    }
+    # providers {
+    #   user
+    # }
   }
 }
 ```

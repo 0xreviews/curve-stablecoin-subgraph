@@ -91,6 +91,7 @@ type AMM @entity {
   withdraws: [Withdraw!]!
   sum_x: BigInt! # uint256
   sum_y: BigInt! # uint256
+  user_count: BigInt! # uint256
   trade_count: BigInt! # uint256
 }
 

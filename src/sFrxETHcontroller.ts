@@ -21,7 +21,7 @@ import {
   load_sFrxETHAMM,
 } from "./utils/loadOrCreateEntity";
 import { INT_DECIMAL, SFRXETH_AMM_ID } from "./constance";
-import { sFrxETHAMMAddress } from "./deployment";
+import { sFrxETHAMMAddress, sFrxETHControllerAddress } from "./deployment";
 import {
   insertUniqueElementFromArray,
   removeElementFromArray,
@@ -30,6 +30,10 @@ import { sFrxETHAMM } from "../generated/sFrxETHAMM/sFrxETHAMM";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(
   Address.fromString(sFrxETHAMMAddress)
+);
+
+const sFrxETHControllerContract = sFrxETHController.bind(
+  Address.fromString(sFrxETHControllerAddress)
 );
 
 export function handleUserState(event: UserState): void {
@@ -142,7 +146,7 @@ export function handleUserState(event: UserState): void {
 
   // update `user_status.debt_amount` `user_status.collateral_amount`
   user_status.collateral_amount = collateral;
-  user_status.debt_amount = collateral;
+  user_status.debt_amount = debt;
 
   // update user_status.x , y
   {
@@ -150,6 +154,14 @@ export function handleUserState(event: UserState): void {
     if (!callResult.reverted) {
       user_status.sum_x = callResult.value[0];
       user_status.sum_y = callResult.value[1];
+    }
+  }
+
+  // amm.user_count
+  {
+    let callResult = sFrxETHControllerContract.try_n_loans();
+    if (!callResult.reverted) {
+      amm.user_count = callResult.value;
     }
   }
 

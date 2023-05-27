@@ -34,6 +34,10 @@ const sFrxETHAMMContract = sFrxETHAMM.bind(
   Address.fromString(sFrxETHAMMAddress)
 );
 
+const sFrxETHControllerContract = sFrxETHController.bind(
+  Address.fromString(sFrxETHControllerAddress)
+);
+
 export function load_Band(AMMID: string, index: BigInt): Band {
   let id = AMMID.toString() + "_" + index.toString();
   let entity = Band.load(id);
@@ -165,6 +169,7 @@ function _initAMMEntity(AMMContract: sFrxETHAMM, entity: AMM): AMM {
   entity.total_shares = [];
   entity.user_shares = [];
   entity.trades = [];
+  entity.user_count = BigInt.fromI32(0);
   entity.trade_count = BigInt.fromI32(0);
   entity.deposits = [];
   entity.withdraws = [];
@@ -268,6 +273,20 @@ function _initAMMEntity(AMMContract: sFrxETHAMM, entity: AMM): AMM {
       entity.p_o = entity.BASE_PRICE;
     }
   }
+
+  // user_count
+  {
+    let callResult = sFrxETHControllerContract.try_n_loans();
+    if (!callResult.reverted) {
+      entity.user_count = callResult.value;
+    }
+  }
+
+  // // init bands
+  // for (let i = entity.min_band.toI32(); i <= entity.max_band.toI32(); i++) {
+  //   let band = load_Band(SFRXETH_AMM_ID, BigInt.fromI32(i));
+  //   band.save();
+  // }
 
   return entity;
 }

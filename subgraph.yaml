@@ -66,6 +66,8 @@ dataSources:
       abis:
         - name: sFrxETHAMM
           file: ./abis/LLAMMA.json
+        - name: sFrxETHController
+          file: ./abis/Controller.json
         - name: sFrxETH
           file: ./abis/sFrxETH.json
         - name: sFrxETHPriceOracle
