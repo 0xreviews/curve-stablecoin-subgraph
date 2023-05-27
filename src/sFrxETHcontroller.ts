@@ -51,6 +51,9 @@ export function handleUserState(event: UserState): void {
   user_status.n2 = n2;
   user_status.liquidation_discount = liquidation_discount;
 
+  amm.min_band = n1.lt(amm.min_band) ? n1 : amm.min_band;
+  amm.max_band = n2.gt(amm.max_band) ? n2 : amm.max_band;
+
   let ticks: string[] = [];
 
   let xs: BigInt[] = [];
@@ -62,7 +65,6 @@ export function handleUserState(event: UserState): void {
       ys = callResult.value[1];
     }
   }
-
 
   // update status from band n1 to band n2
   for (let i = 0; i < N; i++) {

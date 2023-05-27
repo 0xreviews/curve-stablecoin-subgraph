@@ -8,12 +8,21 @@
     "create-local": "graph create --node http://localhost:8020/ curve-stablecoin",
     "remove-local": "graph remove --node http://localhost:8020/ curve-stablecoin",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 curve-stablecoin",
-    "test": "graph test",
+    "test": "mocha ./tests/*",
     "auto-deploy": "npm run codegen && npm run build && npm run deploy"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.50.1",
     "@graphprotocol/graph-ts": "0.30.0"
   },
-  "devDependencies": { "matchstick-as": "0.5.0" }
+  "devDependencies": {
+    "@indexed-finance/multicall": "^2.0.0",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "ethers": "^5.7.2",
+    "matchstick-as": "0.5.0",
+    "mocha": "^10.2.0",
+    "urql": "^4.0.2"
+  }
 }
