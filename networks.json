@@ -1,0 +1,10 @@
+{
+  "mainnet": {
+    "sFrxETHController": {
+      "address": "0x8472A9A7632b173c8Cf3a86D3afec50c35548e76"
+    },
+    "sFrxETHAMM": {
+      "address": "0x136e783846ef68C8Bd00a3369F787dF8d683a696"
+    }
+  }
+}

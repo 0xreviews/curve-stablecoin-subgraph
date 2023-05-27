@@ -1,0 +1,174 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: sFrxETHController
+    network: mainnet
+    source:
+      address: "0x8472A9A7632b173c8Cf3a86D3afec50c35548e76"
+      abi: sFrxETHController
+      startBlock: 17257950
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - UserState
+        - Borrow
+        - Repay
+        - RemoveCollateral
+        - Liquidate
+        - SetMonetaryPolicy
+        - SetBorrowingDiscounts
+        - CollectFees
+      abis:
+        - name: sFrxETHController
+          file: ./abis/Controller.json
+        - name: sFrxETHAMM
+          file: ./abis/LLAMMA.json
+      eventHandlers:
+        - event: UserState(indexed address,uint256,uint256,int256,int256,uint256)
+          handler: handleUserState
+        - event: Borrow(indexed address,uint256,uint256)
+          handler: handleBorrow
+        - event: Repay(indexed address,uint256,uint256)
+          handler: handleRepay
+        - event: RemoveCollateral(indexed address,uint256)
+          handler: handleRemoveCollateral
+        - event: Liquidate(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleLiquidate
+        - event: SetMonetaryPolicy(address)
+          handler: handleSetMonetaryPolicy
+        - event: SetBorrowingDiscounts(uint256,uint256)
+          handler: handleSetBorrowingDiscounts
+        - event: CollectFees(uint256,uint256)
+          handler: handleCollectFees
+      file: ./src/sFrxETHcontroller.ts
+  - kind: ethereum
+    name: sFrxETHAMM
+    network: mainnet
+    source:
+      address: "0x136e783846ef68C8Bd00a3369F787dF8d683a696"
+      abi: sFrxETHAMM
+      startBlock: 17258064
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - TokenExchange
+        - Deposit
+        - Withdraw
+        - SetRate
+        - SetFee
+        - SetAdminFee
+      abis:
+        - name: sFrxETHAMM
+          file: ./abis/LLAMMA.json
+        - name: sFrxETH
+          file: ./abis/sFrxETH.json
+        - name: sFrxETHPriceOracle
+          file: ./abis/sFrxETHPriceOracle.json
+        - name: sFrxETHChainlink
+          file: ./abis/sFrxETHChainlink.json
+        - name: sFrxETHSwapPool
+          file: ./abis/sFrxETHSwapPool.json
+      eventHandlers:
+        - event: TokenExchange(indexed address,uint256,uint256,uint256,uint256)
+          handler: handleTokenExchange
+        - event: Deposit(indexed address,uint256,int256,int256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: SetRate(uint256,uint256,uint256)
+          handler: handleSetRate
+        - event: SetFee(uint256)
+          handler: handleSetFee
+        - event: SetAdminFee(uint256)
+          handler: handleSetAdminFee
+      file: ./src/sFrxETHAMM.ts
+  
+  - kind: ethereum
+    name: sFrxETH
+    network: mainnet
+    source:
+      address: "0x19F5B81e5325F882C9853B5585f74f751DE3896d"
+      abi: sFrxETH
+      startBlock: 17258058
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmptyEvent
+      abis:
+        - name: sFrxETH
+          file: ./abis/sFrxETH.json
+      eventHandlers:
+        - event: EmptyEvent()
+          handler: handleEmptyEvent
+      file: ./src/emptyHandler.ts
+
+  - kind: ethereum
+    name: sFrxETHPriceOracle
+    network: mainnet
+    source:
+      address: "0x19F5B81e5325F882C9853B5585f74f751DE3896d"
+      abi: sFrxETHPriceOracle
+      startBlock: 17258058
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmptyEvent
+      abis:
+        - name: sFrxETHPriceOracle
+          file: ./abis/sFrxETHPriceOracle.json
+      eventHandlers:
+        - event: EmptyEvent()
+          handler: handleEmptyEvent
+      file: ./src/emptyHandler.ts
+
+  - kind: ethereum
+    name: sFrxETHChainlink
+    network: mainnet
+    source:
+      address: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+      abi: sFrxETHChainlink
+      startBlock: 17258058
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmptyEvent
+      abis:
+        - name: sFrxETHChainlink
+          file: ./abis/sFrxETHChainlink.json
+      eventHandlers:
+        - event: EmptyEvent()
+          handler: handleEmptyEvent
+      file: ./src/emptyHandler.ts
+
+  - kind: ethereum
+    name: sFrxETHSwapPool
+    network: mainnet
+    source:
+      address: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"
+      abi: sFrxETHSwapPool
+      startBlock: 17258058
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - EmptyEvent
+      abis:
+        - name: sFrxETHSwapPool
+          file: ./abis/sFrxETHSwapPool.json
+      eventHandlers:
+        - event: EmptyEvent()
+          handler: handleEmptyEvent
+      file: ./src/emptyHandler.ts

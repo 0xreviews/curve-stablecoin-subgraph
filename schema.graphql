@@ -1,0 +1,157 @@
+type Token @entity {
+  id: ID! # address
+  symbol: String!
+  name: String!
+  decimals: BigInt! # uint256
+  address: Bytes! # address
+}
+
+type Band @entity {
+  id: ID! # AMMID_int256
+  AMM: AMM! # LLAMMA
+  index: BigInt! # int256
+  x: BigInt! # uint256
+  y: BigInt! # uint256
+  providers: [UserStatus!]! # AMMID_user address
+}
+
+type Share @entity {
+  id: ID! # AMMID_int256
+  AMM: AMM! # LLAMMA
+  user: Bytes! # address, if total_share will be AMM address
+  index: BigInt! # int256
+  share: BigInt! # uint256
+}
+
+type UserStatus @entity {
+  id: ID! # AMMID_user address
+  AMM: AMM! # LLAMMA
+  user: Bytes! # address
+  n1: BigInt! # int256
+  n2: BigInt! # int256
+  sum_x: BigInt! # uint256
+  sum_y: BigInt! # uint256
+  collateral_amount: BigInt! # uint256
+  debt_amount: BigInt! # uint256
+  liquidation_discount: BigInt! # uint256
+  ticks: [Share!]!
+  borrows: [Borrow!]! # Borrow event
+  repays: [Repay!]! # Repay event
+  removeCollaterals: [RemoveCollateral!]! # RemoveCollateral event
+  liquidates: [Liquidate!]! # Liquidate event
+}
+
+type DetailedTrade @entity {
+  id: ID! # AMMID_tradeCount
+  AMM: AMM! # LLAMMA
+  buyer: Bytes! # address
+  sold_id: BigInt! # uint256
+  tokens_sold: BigInt! # uint256
+  bought_id: BigInt! # uint256
+  tokens_bought: BigInt! # uint256
+  avg_price: BigInt! # uint256
+  oracle_price: BigInt! # uint256
+  market_price: BigInt! # uint256
+  profit_rate: BigInt! # uint256
+  n1: BigInt! # int256
+  n2: BigInt! # int256
+  ticks_in: [BigInt!]! # uint256[]
+  ticks_out: [BigInt!]! # uint256[]
+  timestamp: BigInt! # block.timestamp
+}
+
+type AMM @entity {
+  id: ID! # string
+  address: Bytes! # address
+  # immutable constantce
+  BORROWED_TOKEN: Token! # Token
+  BORROWED_PRECISION: BigInt! # uint256
+  COLLATERAL_TOKEN: Token! # Token
+  COLLATERAL_PRECISION: BigInt! # uint256
+  BASE_PRICE: BigInt! # uint256
+  A: BigInt! # uint256
+  # public storage var
+  fee: BigInt! # uint256
+  fees_x: BigInt! # uint256
+  fees_y: BigInt! # uint256
+  admin_fee: BigInt! # uint256
+  rate: BigInt! # uint256
+  active_band: BigInt! # int256
+  min_band: BigInt! # int256
+  max_band: BigInt! # int256
+  admin_fees_x: BigInt! # uint256
+  admin_fees_y: BigInt! # uint256
+  price_oracle_contract: Bytes! # address
+  p_o: BigInt! # uint256
+  bands: [Band!]! # MAX_SKIP_TICKS 1024
+  total_shares: [Share!]! # MAX_SKIP_TICKS 1024
+  user_shares: [UserStatus!]!
+  trades: [DetailedTrade!]! # TokenExchange
+  deposits: [Deposit!]!
+  withdraws: [Withdraw!]!
+  sum_x: BigInt! # uint256
+  sum_y: BigInt! # uint256
+  trade_count: BigInt! # uint256
+}
+
+type Deposit @entity {
+  id: ID! # AMMID_user_timestamp
+  AMM: AMM!
+  provider: Bytes! # address
+  amount: BigInt! # uint256
+  n1: BigInt! # int256
+  n2: BigInt! # int256
+  timestamp: BigInt! # timestamp
+  tx: Bytes! # tx hash
+}
+
+type Withdraw @entity {
+  id: ID! # AMMID_user_timestamp
+  AMM: AMM!
+  provider: Bytes! # address
+  amount_borrowed: BigInt! # uint256
+  amount_collateral: BigInt! # uint256
+  timestamp: BigInt!
+  tx: Bytes! # tx hash
+}
+
+type Borrow @entity {
+  id: ID! # AMMID_user_timestamp
+  AMM: AMM!
+  user: Bytes! # address
+  collateral_increase: BigInt! # uint256
+  loan_increase: BigInt! # uint256
+  timestamp: BigInt!
+  tx: Bytes! # tx hash
+}
+
+type Repay @entity {
+  id: ID! # AMMID_user_timestamp
+  AMM: AMM!
+  user: Bytes! # address
+  collateral_decrease: BigInt! # uint256
+  loan_decrease: BigInt! # uint256
+  timestamp: BigInt!
+  tx: Bytes! # tx hash
+}
+
+type RemoveCollateral @entity {
+  id: ID! # AMMID_user_timestamp
+  AMM: AMM!
+  user: Bytes! # address
+  collateral_decrease: BigInt! # uint256
+  timestamp: BigInt!
+  tx: Bytes! # tx hash
+}
+
+type Liquidate @entity {
+  id: ID! # AMMID_user_timestamp
+  AMM: AMM!
+  user: Bytes! # address
+  liquidator: Bytes! # address
+  collateral_received: BigInt! # uint256
+  stablecoin_received: BigInt! # uint256
+  debt: BigInt! # uint256
+  timestamp: BigInt!
+  tx: Bytes! # tx hash
+}
