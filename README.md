@@ -31,6 +31,7 @@ npm run test
     max_band
     p_o
     trade_count
+    user_count
     user_shares(first: 10) {
       user
       n1
