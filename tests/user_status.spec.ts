@@ -37,9 +37,9 @@ describe("User Status", function() {
       // console.log(gql_res);
 
       if (gql_res.length === 0) {
-        console.log(
-          `From user ${begin_num} to user ${end_num}, gql num is zero, skip test`
-        );
+        // console.log(
+        //   `From user ${begin_num} to user ${end_num}, gql num is zero, skip test`
+        // );
         continue;
       }
 
@@ -121,9 +121,9 @@ describe("User Status", function() {
         }
       }
 
-      console.log(
-        `From user ${begin_num} to user ${end_num}, gql num ${gql_res.length}, multicall num ${user_tick_numbers.length}`
-      );
+      // console.log(
+      //   `From user ${begin_num} to user ${end_num}, gql num ${gql_res.length}, multicall num ${user_tick_numbers.length}`
+      // );
     }
 
     console.log(

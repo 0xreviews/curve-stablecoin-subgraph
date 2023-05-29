@@ -42,9 +42,9 @@ describe("Bands", function() {
         });
 
         if (data.bands.length === 0) {
-          console.log(
-            `From band ${begin_band} to band ${end_band}, gql num is zero, skip test`
-          );
+          // console.log(
+          //   `From band ${begin_band} to band ${end_band}, gql num is zero, skip test`
+          // );
           continue;
         }
 
@@ -96,9 +96,9 @@ describe("Bands", function() {
             );
           }
         }
-        console.log(
-          `From band ${begin_band} to band ${end_band}, gql num ${data.bands.length}, multicall num ${bands_x.length}`
-        );
+        // console.log(
+        //   `From band ${begin_band} to band ${end_band}, gql num ${data.bands.length}, multicall num ${bands_x.length}`
+        // );
       }
 
       console.log(
@@ -135,9 +135,9 @@ describe("Bands", function() {
         });
 
         if (data.bands.length === 0) {
-          console.log(
-            `From band ${begin_band} to band ${end_band}, gql num is zero, skip test`
-          );
+          // console.log(
+          //   `From band ${begin_band} to band ${end_band}, gql num is zero, skip test`
+          // );
           continue;
         }
 
@@ -148,9 +148,9 @@ describe("Bands", function() {
             ...band,
           };
         }
-        console.log(
-          `From band ${begin_band} to band ${end_band}, gql num ${data.bands.length}`
-        );
+        // console.log(
+        //   `From band ${begin_band} to band ${end_band}, gql num ${data.bands.length}`
+        // );
       }
 
       let gql_providers = {};
@@ -187,18 +187,23 @@ describe("Bands", function() {
         }
         const multiRes = await multicall(inputs_user_tick_numbers, LLAMMA_ABI);
         user_tick_numbers = user_tick_numbers.concat(multiRes as any[]);
-        console.log(
-          `From provider ${begin_num} to ${end_num}, multicall num ${multiRes.length}`
-        );
+        // console.log(
+        //   `From provider ${begin_num} to ${end_num}, multicall num ${multiRes.length}`
+        // );
       }
 
       for (let i = 0; i < user_tick_numbers.length; i++) {
-        const user_address = gql_providers[i]
-        const multicall_n1 = user_tick_numbers[i]["n1"]
-        const multicall_n2 = user_tick_numbers[i]["n2"]
+        const user_address = gql_providers[i];
+        const multicall_n1 = user_tick_numbers[i]["n1"];
+        const multicall_n2 = user_tick_numbers[i]["n2"];
         for (let j = multicall_n1; j <= multicall_n2; j++) {
-          const band_providers = gql_bands[j]["providers"].map(p => p['user'])
-          expect(band_providers.find(user_address), `user ${user_address} should provide band ${j}`)
+          const band_providers = gql_bands[j]["providers"].map(
+            (p) => p["user"]
+          );
+          expect(
+            band_providers.find(user_address),
+            `user ${user_address} should provide band ${j}`
+          );
         }
       }
     });
