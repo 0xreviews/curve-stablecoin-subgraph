@@ -20,6 +20,7 @@ import {
 } from "./constance";
 import {
   load_Band,
+  load_BandDelta,
   load_Deposit,
   load_DetailedTrade,
   load_Share,
@@ -166,6 +167,7 @@ export function handleTokenExchange(event: TokenExchange): void {
   while (true) {
     let cur_band = BigInt.fromI32(n2);
     let band = load_Band(SFRXETH_AMM_ID, cur_band);
+    let bandDelta = load_BandDelta(SFRXETH_AMM_ID, cur_band, event.block.timestamp);
     // x in y out
     if (pump_in) {
       let old_y = band.y;
@@ -183,6 +185,7 @@ export function handleTokenExchange(event: TokenExchange): void {
       }
       ticks_out.push(amount_out);
       amount_out_left = amount_out_left.minus(amount_out);
+      bandDelta.dy = amount_out.times(BigInt.fromI32(-1));
 
       // bands_x
       let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
@@ -191,8 +194,9 @@ export function handleTokenExchange(event: TokenExchange): void {
         band.x = callResult.value;
         ticks_in.push(amount_in);
         amount_in_left = amount_in_left.minus(amount_in);
+        bandDelta.dx = amount_in;
       }
-      band.save();
+
 
       if (n2 >= amm.max_band.toI32() || n2 >= target_band) break;
       n2 += 1;
@@ -213,6 +217,7 @@ export function handleTokenExchange(event: TokenExchange): void {
       }
       amount_out_left = amount_out_left.minus(amount_out);
       ticks_out.push(amount_out);
+      bandDelta.dx = amount_out.times(BigInt.fromI32(-1));
 
       // bands_y
       let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
@@ -221,15 +226,18 @@ export function handleTokenExchange(event: TokenExchange): void {
         band.y = callResult.value;
         ticks_in.push(amount_in);
         amount_in_left = amount_in_left.minus(amount_in);
+        bandDelta.dy = amount_in;
       }
 
       // @todo update providers sum_x, sum_y
 
 
-      band.save();
       if (n2 <= amm.min_band.toI32() || n2 <= target_band) break;
       n2 -= 1;
     }
+
+    band.save();
+    bandDelta.save();
 
     if (amount_out_left.isZero()) break;
   }

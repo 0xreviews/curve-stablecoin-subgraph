@@ -18,6 +18,7 @@ import {
   Repay,
   RemoveCollateral,
   Liquidate,
+  BandDelta,
 } from "../../generated/schema";
 import { initAddressZero } from "./utils";
 import {
@@ -406,6 +407,24 @@ export function load_Liquidate(AMMID: string, user: Bytes, ts: BigInt): Liquidat
     entity.debt = BigInt.fromI32(0);
     entity.timestamp = ts;
     entity.tx = Bytes.empty();
+  }
+  return entity;
+}
+
+export function load_BandDelta(AMMID: string, index: BigInt, ts: BigInt): BandDelta {
+  let id = AMMID.toString() + "_" + index.toHexString() + "_" + ts.toString();
+  let entity = BandDelta.load(id);
+  if (entity == null) {
+    entity = new BandDelta(id);
+    if (AMMID == SFRXETH_AMM_ID) {
+      entity.AMM = load_sFrxETHAMM().id;
+    } else {
+      entity.AMM = load_sFrxETHAMM().id;
+    }
+    entity.index = index;
+    entity.dx = BigInt.fromI32(0);
+    entity.dy = BigInt.fromI32(0);
+    entity.timestamp = ts;
   }
   return entity;
 }

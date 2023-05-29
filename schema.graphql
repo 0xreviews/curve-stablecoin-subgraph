@@ -158,3 +158,12 @@ type Liquidate @entity {
   timestamp: BigInt!
   tx: Bytes! # tx hash
 }
+
+type BandDelta @entity {
+  id: ID! # AMMID_BandIndex_timestamp
+  AMM: AMM!
+  index: BigInt! # uint256
+  dx: BigInt! # uint256
+  dy: BigInt! # uint256
+  timestamp: BigInt! # timestamp
+}

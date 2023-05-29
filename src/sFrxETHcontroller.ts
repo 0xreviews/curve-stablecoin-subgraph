@@ -12,6 +12,7 @@ import {
 } from "../generated/sFrxETHController/sFrxETHController";
 import {
   load_Band,
+  load_BandDelta,
   load_Borrow,
   load_Liquidate,
   load_RemoveCollateral,
@@ -81,6 +82,8 @@ export function handleUserState(event: UserState): void {
       cur_band
     );
     let old_total_share = total_shares.share;
+    const old_x = band.x;
+    const old_y = band.y;
 
     // update band.x band.y
     {
@@ -96,10 +99,12 @@ export function handleUserState(event: UserState): void {
       }
     }
 
+    let ds = BigInt.fromI32(0);
+
     // check if user repay remove all collateral and debt
     if (collateral.isZero() && debt.isZero()) {
       // decrease amm.total_shares
-      let ds = user_shares.share;
+      ds = user_shares.share;
       total_shares.share = old_total_share.minus(ds);
       // remove UserStatus
       user_status.n1 = BigInt.fromI32(0);
@@ -117,12 +122,21 @@ export function handleUserState(event: UserState): void {
     } else {
       // calc ds
       let new_share = BigInt.fromI32(0);
-      if (ys[i].isZero()) {
-        new_share = xs[i].times(INT_DECIMAL).div(band.x);
+      if (old_total_share.isZero()) {
+        if (ys[i].isZero()) {
+          new_share = xs[i];
+        } else {
+          new_share = ys[i];
+        }
       } else {
-        new_share = ys[i].times(INT_DECIMAL).div(band.y);
+        if (ys[i].isZero()) {
+          new_share = xs[i].times(INT_DECIMAL).div(band.x);
+        } else {
+          new_share = ys[i].times(INT_DECIMAL).div(band.y);
+        }
       }
-      let ds = new_share.minus(user_shares.share);
+
+      ds = new_share.minus(user_shares.share);
       user_shares.share = new_share;
       total_shares.share = total_shares.share.plus(ds);
       ticks.push(user_shares.id);
@@ -137,6 +151,16 @@ export function handleUserState(event: UserState): void {
         band.providers
       );
     }
+
+    // delta band x,y
+    let bandDelta = load_BandDelta(
+      SFRXETH_AMM_ID,
+      cur_band,
+      event.block.timestamp
+    );
+    bandDelta.dx = old_total_share.isZero() ? band.x : old_x.times(ds).div(total_shares.share);
+    bandDelta.dy = old_total_share.isZero() ? band.y : old_y.times(ds).div(total_shares.share);
+    bandDelta.save();
 
     band.save();
     user_shares.save();
