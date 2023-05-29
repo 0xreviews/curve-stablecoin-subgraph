@@ -325,6 +325,8 @@ export function load_Withdraw(AMMID: string, user: Bytes, ts: BigInt): Withdraw 
     entity.provider = user;
     entity.amount_borrowed = BigInt.fromI32(0);
     entity.amount_collateral = BigInt.fromI32(0);
+    entity.n1 = BigInt.fromI32(0);
+    entity.n2 = BigInt.fromI32(0);
     entity.timestamp = ts;
     entity.tx = Bytes.empty();
   }

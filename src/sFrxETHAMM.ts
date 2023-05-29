@@ -284,6 +284,10 @@ export function handleWithdraw(event: Withdraw): void {
   entity.amount_borrowed = amount_borrowed;
   entity.amount_collateral = amount_collateral;
   entity.tx = event.transaction.hash;
+  
+  let user_status = load_UserStatus(SFRXETH_AMM_ID, provider);
+  entity.n1 = user_status.n1;
+  entity.n2 = user_status.n2;
 
   let amm = load_sFrxETHAMM();
   amm.withdraws = insertUniqueElementFromArray(entity.id, amm.withdraws);

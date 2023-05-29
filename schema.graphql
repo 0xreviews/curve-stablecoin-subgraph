@@ -112,6 +112,8 @@ type Withdraw @entity {
   provider: Bytes! # address
   amount_borrowed: BigInt! # uint256
   amount_collateral: BigInt! # uint256
+  n1: BigInt! # int256
+  n2: BigInt! # int256
   timestamp: BigInt!
   tx: Bytes! # tx hash
 }
