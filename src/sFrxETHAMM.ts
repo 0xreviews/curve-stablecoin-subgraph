@@ -19,7 +19,7 @@ import {
   load_sFrxETHAMM,
 } from "./utils/loadOrCreateEntity";
 import { sFrxETHAMMAddress } from "./deployment";
-import { insertUniqueElementFromArray, tryCallBand } from "./utils/utils";
+import { insertUniqueElementFromArray } from "./utils/utils";
 import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(

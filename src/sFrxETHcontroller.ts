@@ -27,7 +27,6 @@ import {
   getAMMEventType,
   insertUniqueElementFromArray,
   removeElementFromArray,
-  tryCallBand,
 } from "./utils/utils";
 import { sFrxETHAMM } from "../generated/sFrxETHAMM/sFrxETHAMM";
 import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
