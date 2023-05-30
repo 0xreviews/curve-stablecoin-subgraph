@@ -130,31 +130,3 @@ export function getAMMEventType(event: ethereum.Event): string {
   return ammEventType;
 }
 
-const sFrxETHAMMContract = sFrxETHAMM.bind(
-  Address.fromString(sFrxETHAMMAddress)
-);
-
-export function tryCallBand(
-  cur_band: BigInt,
-  ifBandx: boolean,
-  retry_times: number
-): BigInt | null {
-  let times = 0;
-  while (times <= retry_times) {
-    let callResult: ethereum.CallResult<BigInt>;
-    if (ifBandx) {
-      callResult = sFrxETHAMMContract.try_bands_x(cur_band);
-    } else {
-      callResult = sFrxETHAMMContract.try_bands_y(cur_band);
-    }
-
-    if (!callResult.reverted) {
-      return callResult.value;
-    } else {
-      if (times < retry_times) {
-        times++;
-      }
-    }
-    return null;
-  }
-}
