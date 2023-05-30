@@ -102,7 +102,10 @@ export function load_UserStatus(AMMID: string, user: Bytes): UserStatus {
   return entity;
 }
 
-export function load_DetailedTrade(AMMID: string, count: BigInt): DetailedTrade {
+export function load_DetailedTrade(
+  AMMID: string,
+  count: BigInt
+): DetailedTrade {
   let id = AMMID + "_" + count.toString();
   let entity = DetailedTrade.load(id);
   if (entity == null) {
@@ -160,6 +163,9 @@ export function load_sFrxETHAMM(): AMM {
 }
 
 function _initAMMEntity(AMMContract: sFrxETHAMM, entity: AMM): AMM {
+  entity.active_band = BigInt.fromI32(0);
+  entity.min_band = BigInt.fromI32(0);
+  entity.max_band = BigInt.fromI32(0);
   entity.fees_x = BigInt.fromI32(0);
   entity.fees_y = BigInt.fromI32(0);
   entity.admin_fees_x = BigInt.fromI32(0);
@@ -225,35 +231,34 @@ function _initAMMEntity(AMMContract: sFrxETHAMM, entity: AMM): AMM {
     }
   }
 
-  // active_band
-  {
-    let callResult = AMMContract.try_active_band();
-    if (!callResult.reverted) {
-      entity.active_band = callResult.value;
-    } else {
-      entity.active_band = BigInt.fromI32(0);
-    }
-  }
+  // // active_band
+  // {
+  //   let callResult = AMMContract.try_active_band();
+  //   if (!callResult.reverted) {
+  //     entity.active_band = callResult.value;
+  //   } else {
+  //   }
+  // }
 
-  // min_band
-  {
-    let callResult = AMMContract.try_min_band();
-    if (!callResult.reverted) {
-      entity.min_band = callResult.value;
-    } else {
-      entity.min_band = BigInt.fromI32(0);
-    }
-  }
+  // // min_band
+  // {
+  //   let callResult = AMMContract.try_min_band();
+  //   if (!callResult.reverted) {
+  //     entity.min_band = callResult.value;
+  //   } else {
+  //     entity.min_band = BigInt.fromI32(0);
+  //   }
+  // }
 
-  // max_band
-  {
-    let callResult = AMMContract.try_max_band();
-    if (!callResult.reverted) {
-      entity.max_band = callResult.value;
-    } else {
-      entity.max_band = BigInt.fromI32(0);
-    }
-  }
+  // // max_band
+  // {
+  //   let callResult = AMMContract.try_max_band();
+  //   if (!callResult.reverted) {
+  //     entity.max_band = callResult.value;
+  //   } else {
+  //     entity.max_band = BigInt.fromI32(0);
+  //   }
+  // }
 
   // price_oracle_contract
   {
@@ -292,7 +297,6 @@ function _initAMMEntity(AMMContract: sFrxETHAMM, entity: AMM): AMM {
   return entity;
 }
 
-
 export function load_Deposit(AMMID: string, user: Bytes, ts: BigInt): Deposit {
   let id = AMMID.toString() + "_" + user.toHexString() + "_" + ts.toString();
   let entity = Deposit.load(id);
@@ -313,7 +317,11 @@ export function load_Deposit(AMMID: string, user: Bytes, ts: BigInt): Deposit {
   return entity;
 }
 
-export function load_Withdraw(AMMID: string, user: Bytes, ts: BigInt): Withdraw {
+export function load_Withdraw(
+  AMMID: string,
+  user: Bytes,
+  ts: BigInt
+): Withdraw {
   let id = AMMID.toString() + "_" + user.toHexString() + "_" + ts.toString();
   let entity = Withdraw.load(id);
   if (entity == null) {
@@ -372,7 +380,11 @@ export function load_Repay(AMMID: string, user: Bytes, ts: BigInt): Repay {
   return entity;
 }
 
-export function load_RemoveCollateral(AMMID: string, user: Bytes, ts: BigInt): RemoveCollateral {
+export function load_RemoveCollateral(
+  AMMID: string,
+  user: Bytes,
+  ts: BigInt
+): RemoveCollateral {
   let id = AMMID.toString() + "_" + user.toHexString() + "_" + ts.toString();
   let entity = RemoveCollateral.load(id);
   if (entity == null) {
@@ -390,7 +402,11 @@ export function load_RemoveCollateral(AMMID: string, user: Bytes, ts: BigInt): R
   return entity;
 }
 
-export function load_Liquidate(AMMID: string, user: Bytes, ts: BigInt): Liquidate {
+export function load_Liquidate(
+  AMMID: string,
+  user: Bytes,
+  ts: BigInt
+): Liquidate {
   let id = AMMID.toString() + "_" + user.toHexString() + "_" + ts.toString();
   let entity = Liquidate.load(id);
   if (entity == null) {
@@ -411,7 +427,11 @@ export function load_Liquidate(AMMID: string, user: Bytes, ts: BigInt): Liquidat
   return entity;
 }
 
-export function load_BandDelta(AMMID: string, index: BigInt, ts: BigInt): BandDelta {
+export function load_BandDelta(
+  AMMID: string,
+  index: BigInt,
+  ts: BigInt
+): BandDelta {
   let id = AMMID.toString() + "_" + index.toHexString() + "_" + ts.toString();
   let entity = BandDelta.load(id);
   if (entity == null) {

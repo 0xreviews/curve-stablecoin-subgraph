@@ -27,6 +27,7 @@ import {
   getAMMEventType,
   insertUniqueElementFromArray,
   removeElementFromArray,
+  tryCallBand,
 } from "./utils/utils";
 import { sFrxETHAMM } from "../generated/sFrxETHAMM/sFrxETHAMM";
 import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
@@ -90,17 +91,22 @@ export function handleUserState(event: UserState): void {
     const old_y = band.y;
 
     // update band.x band.y
-    {
+    let retry_bandy_times = 0;
+    while (retry_bandy_times < 10){
       let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
       if (!callResult.reverted) {
         band.y = callResult.value;
+        break;
       }
+      retry_bandy_times++;
     }
-    {
+    let retry_bandx_times = 0;
+    while (retry_bandx_times < 10){
       let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
       if (!callResult.reverted) {
         band.x = callResult.value;
       }
+      retry_bandx_times++;
     }
 
     let ds = BigInt.fromI32(0);

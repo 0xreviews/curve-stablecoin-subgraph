@@ -1,5 +1,7 @@
 import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
 import { INT_DECIMAL } from "../constance";
+import { sFrxETHAMM } from "../../generated/sFrxETHAMM/sFrxETHAMM";
+import { sFrxETHAMMAddress } from "../deployment";
 
 export function removeElementFromArray(
   element: string,
@@ -76,7 +78,7 @@ export function get_x0(
 ): BigInt {
   let y0 = get_y0(x, y, p_o, p_o_up);
   if (y0.isZero()) return BigInt.fromI32(0);
-  
+
   let f = A.times(y0)
     .times(p_o)
     .div(p_o_up)
@@ -92,9 +94,8 @@ export function get_x0(
   return x0;
 }
 
-export function p_oracle_up(n:BigInt, base_price: BigInt): BigInt {
-
-  let c = Aminus1.times(INT_DECIMAL).div(A)
+export function p_oracle_up(n: BigInt, base_price: BigInt): BigInt {
+  let c = Aminus1.times(INT_DECIMAL).div(A);
   let res = base_price;
 
   if (n.gt(BigInt.fromI32(0))) {
@@ -112,18 +113,48 @@ export function p_oracle_up(n:BigInt, base_price: BigInt): BigInt {
 
 export function getAMMEventType(event: ethereum.Event): string {
   let ammEventType = "";
-  const tx_logs: ethereum.Log[] = (event.receipt as ethereum.TransactionReceipt).logs;
+  const tx_logs: ethereum.Log[] = (event.receipt as ethereum.TransactionReceipt)
+    .logs;
   for (let i = 0; i < tx_logs.length; i++) {
-    if (tx_logs[i].logType.toLowerCase() == 'deposit') {
+    if (tx_logs[i].logType.toLowerCase() == "deposit") {
       ammEventType = "Deposit";
       break;
-    } else if (tx_logs[i].logType.toLowerCase() == 'withdraw') {
+    } else if (tx_logs[i].logType.toLowerCase() == "withdraw") {
       ammEventType = "Withdraw";
       break;
-    } else if (tx_logs[i].logType.toLowerCase() == 'tokenexchange') {
+    } else if (tx_logs[i].logType.toLowerCase() == "tokenexchange") {
       ammEventType = "TokenExchange";
       break;
     }
   }
   return ammEventType;
+}
+
+const sFrxETHAMMContract = sFrxETHAMM.bind(
+  Address.fromString(sFrxETHAMMAddress)
+);
+
+export function tryCallBand(
+  cur_band: BigInt,
+  ifBandx: boolean,
+  retry_times: number
+): BigInt | null {
+  let times = 0;
+  while (times <= retry_times) {
+    let callResult: ethereum.CallResult<BigInt>;
+    if (ifBandx) {
+      callResult = sFrxETHAMMContract.try_bands_x(cur_band);
+    } else {
+      callResult = sFrxETHAMMContract.try_bands_y(cur_band);
+    }
+
+    if (!callResult.reverted) {
+      return callResult.value;
+    } else {
+      if (times < retry_times) {
+        times++;
+      }
+    }
+    return null;
+  }
 }

@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   Deposit,
   SetAdminFee,
@@ -8,42 +8,18 @@ import {
   Withdraw,
   sFrxETHAMM,
 } from "../generated/sFrxETHAMM/sFrxETHAMM";
-import { sFrxETH } from "../generated/sFrxETH/sFrxETH";
-import { sFrxETHChainlink } from "../generated/sFrxETHChainlink/sFrxETHChainlink";
-import { sFrxETHSwapPool } from "../generated/sFrxETHSwapPool/sFrxETHSwapPool";
-import {
-  CHAINLINK_PRICE_PRECISION,
-  DEAD_SHARES,
-  INT_DECIMAL,
-  MAX_SKIP_TICKS,
-  SFRXETH_AMM_ID,
-} from "./constance";
+import { INT_DECIMAL, MAX_SKIP_TICKS, SFRXETH_AMM_ID } from "./constance";
 import {
   load_Band,
   load_BandDelta,
   load_Deposit,
   load_DetailedTrade,
-  load_Share,
   load_UserStatus,
   load_Withdraw,
   load_sFrxETHAMM,
 } from "./utils/loadOrCreateEntity";
-import {
-  sFrxETHAMMAddress,
-  sFrxETHPriceOracleAddress,
-  sFrxETHChainlinkAddress,
-  sFrxETHSwapPoolAddress,
-  sFrxETHAddress,
-} from "./deployment";
-import {
-  getAMMEventType,
-  get_x0,
-  get_y0,
-  insertUniqueElementFromArray,
-  p_oracle_up,
-  removeElementFromArray,
-} from "./utils/utils";
-import { Share } from "../generated/schema";
+import { sFrxETHAMMAddress } from "./deployment";
+import { insertUniqueElementFromArray, tryCallBand } from "./utils/utils";
 import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(
@@ -72,11 +48,24 @@ export function handleTokenExchange(event: TokenExchange): void {
     }
   }
 
+  {
+    let callResult = sFrxETHAMMContract.try_min_band();
+    if (!callResult.reverted) {
+      amm.min_band = callResult.value;
+    }
+  }
+
+  {
+    let callResult = sFrxETHAMMContract.try_max_band();
+    if (!callResult.reverted) {
+      amm.max_band = callResult.value;
+    }
+  }
+
   let market_price = getSfrxETHMarketPrice()[0];
   if (market_price.isZero()) market_price = amm.p_o;
 
   let pump_in = sold_id.isZero();
-  let n1 = amm.active_band.toI32();
 
   let avg_price = pump_in
     ? tokens_sold.times(INT_DECIMAL).div(tokens_bought)
@@ -101,95 +90,92 @@ export function handleTokenExchange(event: TokenExchange): void {
   trade.profit_rate = profit_rate;
 
   // target active band
-  let target_band = pump_in ? n1 + MAX_SKIP_TICKS : n1 - MAX_SKIP_TICKS;
+  let n2 = amm.active_band.toI32();
+  let n1 = n2;
+  // let target_band = pump_in ? n1 + MAX_SKIP_TICKS : n1 - MAX_SKIP_TICKS;
   {
     let callResult = sFrxETHAMMContract.try_active_band();
     if (!callResult.reverted) {
       amm.active_band = callResult.value;
-      target_band = callResult.value.toI32();
+      // target_band = callResult.value.toI32();
+      n2 = callResult.value.toI32();
     }
   }
 
-  let n2 = n1;
   let amount_in_left = tokens_sold;
   let amount_out_left = tokens_bought;
   let ticks_in: BigInt[] = [];
   let ticks_out: BigInt[] = [];
 
   while (true) {
-    let cur_band = BigInt.fromI32(n2);
+    let cur_band = BigInt.fromI32(n1);
     let band = load_Band(SFRXETH_AMM_ID, cur_band);
     let bandDelta = load_BandDelta(
       SFRXETH_AMM_ID,
       cur_band,
       event.block.timestamp
     );
-    // x in y out
-    if (pump_in) {
-      let old_y = band.y;
+    let old_x = band.x;
+    let old_y = band.y;
 
-      // amount out bands_y
-      let amount_out = amount_out_left.gt(old_y) ? old_y : amount_out_left;
-      {
-        let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
-        if (!callResult.reverted) {
-          amount_out = old_y.minus(callResult.value);
-          band.y = callResult.value;
-        } else {
-          band.y = old_y.minus(amount_out);
-        }
-      }
-      ticks_out.push(amount_out);
-      amount_out_left = amount_out_left.minus(amount_out);
-      bandDelta.dy = amount_out.times(BigInt.fromI32(-1));
-
-      // bands_x
-      let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
-      if (!callResult.reverted) {
-        let amount_in = callResult.value.minus(band.x);
-        band.x = callResult.value;
-        ticks_in.push(amount_in);
-        amount_in_left = amount_in_left.minus(amount_in);
-        bandDelta.dx = amount_in;
-      }
-
-      if (n2 >= amm.max_band.toI32() || n2 >= target_band) break;
-      n2 += 1;
-    } else {
-      // y in x out
-      let old_x = band.x;
-
-      // amount out bands_x
-      let amount_out = amount_out_left.gt(band.x) ? band.x : amount_out_left;
-      {
-        let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
-        if (!callResult.reverted) {
-          amount_out = old_x.minus(callResult.value);
-          band.x = callResult.value;
-        } else {
-          band.x = old_x.minus(amount_out);
-        }
-      }
-      amount_out_left = amount_out_left.minus(amount_out);
-      ticks_out.push(amount_out);
-      bandDelta.dx = amount_out.times(BigInt.fromI32(-1));
-
-      // bands_y
+    // update band.x band.y
+    let retry_bandy_times = 0;
+    while (retry_bandy_times < 10){
       let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
       if (!callResult.reverted) {
-        let amount_in = callResult.value.minus(band.y);
         band.y = callResult.value;
-        ticks_in.push(amount_in);
-        amount_in_left = amount_in_left.minus(amount_in);
-        bandDelta.dy = amount_in;
+        break;
       }
-
-      // @todo update providers sum_x, sum_y
-
-      if (n2 <= amm.min_band.toI32() || n2 <= target_band) break;
-      n2 -= 1;
+      retry_bandy_times++;
+    }
+    let retry_bandx_times = 0;
+    while (retry_bandx_times < 10){
+      let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
+      if (!callResult.reverted) {
+        band.x = callResult.value;
+      }
+      retry_bandx_times++;
     }
 
+    let dx = band.x.minus(old_x);
+    let dy = band.y.minus(old_y);
+
+    if (pump_in) {
+      // x in y out
+      amount_in_left = amount_in_left.minus(dx.abs());
+      amount_out_left = amount_out_left.minus(dy.abs());
+      
+      ticks_in.push(dx.abs());
+      ticks_out.push(dy.abs());
+
+      if (
+        n1 <= amm.min_band.toI32() ||
+        amount_out_left.isZero() ||
+        amount_out_left.lt(BigInt.fromI32(0))
+      )
+        break;
+      n1 -= 1;
+    } else {
+      // y in x out
+      amount_in_left = amount_in_left.minus(dy.abs());
+      amount_out_left = amount_out_left.minus(dx.abs());
+      
+      ticks_in.push(dy.abs());
+      ticks_out.push(dx.abs());
+
+      if (
+        n1 >= amm.min_band.toI32() ||
+        amount_out_left.isZero() ||
+        amount_out_left.lt(BigInt.fromI32(0))
+      )
+        break;
+      n1 += 1;
+    }
+
+    // @todo update providers sum_x, sum_y
+
+    bandDelta.dx = dx;
+    bandDelta.dy = dy;
     bandDelta.market_price = market_price;
     bandDelta.oracle_price = amm.p_o;
     bandDelta.amm_event_type = "TokenExchange";
@@ -197,7 +183,6 @@ export function handleTokenExchange(event: TokenExchange): void {
     bandDelta.save();
     band.save();
 
-    if (amount_out_left.isZero()) break;
   }
 
   // trade from n1 to n2
