@@ -424,6 +424,10 @@ export function load_BandDelta(AMMID: string, index: BigInt, ts: BigInt): BandDe
     entity.index = index;
     entity.dx = BigInt.fromI32(0);
     entity.dy = BigInt.fromI32(0);
+    entity.market_price = BigInt.fromI32(0);
+    entity.oracle_price = BigInt.fromI32(0);
+    entity.amm_event_type = "";
+    // entity.trigger_id = "";
     entity.timestamp = ts;
   }
   return entity;

@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
 import { INT_DECIMAL } from "../constance";
 
 export function removeElementFromArray(
@@ -108,4 +108,22 @@ export function p_oracle_up(n:BigInt, base_price: BigInt): BigInt {
   }
 
   return res;
+}
+
+export function getAMMEventType(event: ethereum.Event): string {
+  let ammEventType = "";
+  const tx_logs: ethereum.Log[] = (event.receipt as ethereum.TransactionReceipt).logs;
+  for (let i = 0; i < tx_logs.length; i++) {
+    if (tx_logs[i].logType.toLowerCase() == 'deposit') {
+      ammEventType = "Deposit";
+      break;
+    } else if (tx_logs[i].logType.toLowerCase() == 'withdraw') {
+      ammEventType = "Withdraw";
+      break;
+    } else if (tx_logs[i].logType.toLowerCase() == 'tokenexchange') {
+      ammEventType = "TokenExchange";
+      break;
+    }
+  }
+  return ammEventType;
 }

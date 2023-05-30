@@ -23,10 +23,18 @@ dataSources:
         - SetBorrowingDiscounts
         - CollectFees
       abis:
-        - name: sFrxETHController
-          file: ./abis/Controller.json
         - name: sFrxETHAMM
           file: ./abis/LLAMMA.json
+        - name: sFrxETHController
+          file: ./abis/Controller.json
+        - name: sFrxETH
+          file: ./abis/sFrxETH.json
+        - name: sFrxETHPriceOracle
+          file: ./abis/sFrxETHPriceOracle.json
+        - name: sFrxETHChainlink
+          file: ./abis/sFrxETHChainlink.json
+        - name: sFrxETHSwapPool
+          file: ./abis/sFrxETHSwapPool.json
       eventHandlers:
         - event: UserState(indexed address,uint256,uint256,int256,int256,uint256)
           handler: handleUserState

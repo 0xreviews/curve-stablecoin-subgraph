@@ -36,6 +36,7 @@ import {
   sFrxETHAddress,
 } from "./deployment";
 import {
+  getAMMEventType,
   get_x0,
   get_y0,
   insertUniqueElementFromArray,
@@ -43,19 +44,10 @@ import {
   removeElementFromArray,
 } from "./utils/utils";
 import { Share } from "../generated/schema";
+import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(
   Address.fromString(sFrxETHAMMAddress)
-);
-
-const sFrxETHContract = sFrxETH.bind(Address.fromString(sFrxETHAddress));
-
-const sFrxETHChainlinkContract = sFrxETHChainlink.bind(
-  Address.fromString(sFrxETHChainlinkAddress)
-);
-
-const sFrxETHSwapPoolContract = sFrxETHSwapPool.bind(
-  Address.fromString(sFrxETHSwapPoolAddress)
 );
 
 export function handleTokenExchange(event: TokenExchange): void {
@@ -80,48 +72,8 @@ export function handleTokenExchange(event: TokenExchange): void {
     }
   }
 
-  // chainlink_price (ETH/USD)
-  let chainlink_price = BigInt.fromI32(0);
-  {
-    let callResult = sFrxETHChainlinkContract.try_latestRoundData();
-    if (!callResult.reverted) {
-      chainlink_price = callResult.value.value1
-        .times(INT_DECIMAL)
-        .div(CHAINLINK_PRICE_PRECISION);
-    }
-  }
-
-  // frxETH/ETH swap pool get price
-  let frxETHPrice = BigInt.fromI32(0);
-  {
-    let callResult = sFrxETHSwapPoolContract.try_get_p();
-    if (!callResult.reverted) {
-      frxETHPrice = callResult.value;
-    }
-  }
-
-  // price_per_share
-  let price_per_share = BigInt.fromI32(0);
-  {
-    let callResult = sFrxETHContract.try_pricePerShare();
-    if (!callResult.reverted) {
-      price_per_share = callResult.value;
-    }
-  }
-
-  // market price = chainlink_price(ETH/USD) * frxETH price * price_per_share
-  let market_price: BigInt = amm.p_o;
-  if (
-    !chainlink_price.isZero() &&
-    !frxETHPrice.isZero() &&
-    !price_per_share.isZero()
-  ) {
-    market_price = chainlink_price
-      .times(frxETHPrice)
-      .div(INT_DECIMAL)
-      .times(price_per_share)
-      .div(INT_DECIMAL);
-  }
+  let market_price = getSfrxETHMarketPrice()[0];
+  if (market_price.isZero()) market_price = amm.p_o;
 
   let pump_in = sold_id.isZero();
   let n1 = amm.active_band.toI32();
@@ -167,7 +119,11 @@ export function handleTokenExchange(event: TokenExchange): void {
   while (true) {
     let cur_band = BigInt.fromI32(n2);
     let band = load_Band(SFRXETH_AMM_ID, cur_band);
-    let bandDelta = load_BandDelta(SFRXETH_AMM_ID, cur_band, event.block.timestamp);
+    let bandDelta = load_BandDelta(
+      SFRXETH_AMM_ID,
+      cur_band,
+      event.block.timestamp
+    );
     // x in y out
     if (pump_in) {
       let old_y = band.y;
@@ -196,7 +152,6 @@ export function handleTokenExchange(event: TokenExchange): void {
         amount_in_left = amount_in_left.minus(amount_in);
         bandDelta.dx = amount_in;
       }
-
 
       if (n2 >= amm.max_band.toI32() || n2 >= target_band) break;
       n2 += 1;
@@ -231,13 +186,16 @@ export function handleTokenExchange(event: TokenExchange): void {
 
       // @todo update providers sum_x, sum_y
 
-
       if (n2 <= amm.min_band.toI32() || n2 <= target_band) break;
       n2 -= 1;
     }
 
-    band.save();
+    bandDelta.market_price = market_price;
+    bandDelta.oracle_price = amm.p_o;
+    bandDelta.amm_event_type = "TokenExchange";
+
     bandDelta.save();
+    band.save();
 
     if (amount_out_left.isZero()) break;
   }
@@ -269,6 +227,7 @@ export function handleDeposit(event: Deposit): void {
   let amount = event.params.amount;
   let n1 = event.params.n1;
   let n2 = event.params.n2;
+  let N = n2.minus(n1).plus(BigInt.fromI32(1));
 
   let entity = load_Deposit(SFRXETH_AMM_ID, provider, event.block.timestamp);
   entity.amount = amount;
@@ -278,8 +237,29 @@ export function handleDeposit(event: Deposit): void {
 
   let amm = load_sFrxETHAMM();
   amm.deposits = insertUniqueElementFromArray(entity.id, amm.deposits);
-  amm.save();
 
+  // price out
+  {
+    let callResult = sFrxETHAMMContract.try_price_oracle();
+    if (!callResult.reverted) {
+      amm.p_o = callResult.value;
+    }
+  }
+
+  let market_price = getSfrxETHMarketPrice()[0];
+  if (market_price.isZero()) market_price = amm.p_o;
+
+  let per_y = amount.div(N);
+  for (let i = n1; i <= n2; i = i.plus(BigInt.fromI32(1))) {
+    let bandDelta = load_BandDelta(SFRXETH_AMM_ID, i, event.block.timestamp);
+    bandDelta.dy = per_y;
+    bandDelta.market_price = market_price;
+    bandDelta.oracle_price = amm.p_o;
+    bandDelta.amm_event_type = "Deposit";
+    bandDelta.save();
+  }
+
+  amm.save();
   entity.save();
 }
 
@@ -292,7 +272,7 @@ export function handleWithdraw(event: Withdraw): void {
   entity.amount_borrowed = amount_borrowed;
   entity.amount_collateral = amount_collateral;
   entity.tx = event.transaction.hash;
-  
+
   let user_status = load_UserStatus(SFRXETH_AMM_ID, provider);
   entity.n1 = user_status.n1;
   entity.n2 = user_status.n2;

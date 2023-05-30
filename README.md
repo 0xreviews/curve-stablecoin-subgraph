@@ -36,10 +36,6 @@ npm run test
       user
       n1
       n2
-      # ticks(orderBy: index) {
-      #   index
-      #   share
-      # }
     }
   }
   detailedTrades(first: 5, orderBy: timestamp, orderDirection: desc) {
@@ -61,9 +57,13 @@ npm run test
     index
     x
     y
-    # providers {
-    #   user
-    # }
+  }
+  bandDeltas(first: 10, orderBy: timestamp) {
+    index
+    dx
+    dy
+    market_price
+    timestamp
   }
 }
 ```

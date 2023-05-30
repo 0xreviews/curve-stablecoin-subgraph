@@ -165,5 +165,9 @@ type BandDelta @entity {
   index: BigInt! # uint256
   dx: BigInt! # uint256
   dy: BigInt! # uint256
+  market_price: BigInt! # uint256
+  oracle_price: BigInt! # uint256
+  amm_event_type: String! # Deposit|Wtithdraw|TokenExchange
+  # trigger_id: String! # ID!
   timestamp: BigInt! # timestamp
 }

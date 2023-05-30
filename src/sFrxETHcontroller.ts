@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
 import {
   sFrxETHController,
   UserState,
@@ -24,10 +24,12 @@ import {
 import { INT_DECIMAL, SFRXETH_AMM_ID } from "./constance";
 import { sFrxETHAMMAddress, sFrxETHControllerAddress } from "./deployment";
 import {
+  getAMMEventType,
   insertUniqueElementFromArray,
   removeElementFromArray,
 } from "./utils/utils";
 import { sFrxETHAMM } from "../generated/sFrxETHAMM/sFrxETHAMM";
+import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(
   Address.fromString(sFrxETHAMMAddress)
@@ -58,6 +60,8 @@ export function handleUserState(event: UserState): void {
 
   amm.min_band = n1.lt(amm.min_band) ? n1 : amm.min_band;
   amm.max_band = n2.gt(amm.max_band) ? n2 : amm.max_band;
+
+  let ammEventType = getAMMEventType(event);
 
   let ticks: string[] = [];
 
@@ -152,15 +156,22 @@ export function handleUserState(event: UserState): void {
       );
     }
 
-    // delta band x,y
-    let bandDelta = load_BandDelta(
-      SFRXETH_AMM_ID,
-      cur_band,
-      event.block.timestamp
-    );
-    bandDelta.dx = old_total_share.isZero() ? band.x : old_x.times(ds).div(total_shares.share);
-    bandDelta.dy = old_total_share.isZero() ? band.y : old_y.times(ds).div(total_shares.share);
-    bandDelta.save();
+    // Only Withdraw event update bandelta,
+    // Deposits and TokenExchange have already updated.
+    if (ammEventType === 'Withdraw') {
+      // delta band x,y
+      let bandDelta = load_BandDelta(
+        SFRXETH_AMM_ID,
+        cur_band,
+        event.block.timestamp
+      );
+      bandDelta.dx = band.x.minus(old_x);
+      bandDelta.dy = band.y.minus(old_y);
+      bandDelta.market_price = getSfrxETHMarketPrice()[0];
+      bandDelta.oracle_price = amm.p_o;
+      bandDelta.amm_event_type = ammEventType;
+      bandDelta.save();
+    }
 
     band.save();
     user_shares.save();
