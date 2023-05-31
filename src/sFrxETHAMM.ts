@@ -11,7 +11,7 @@ import {
 import { INT_DECIMAL, MAX_SKIP_TICKS, SFRXETH_AMM_ID } from "./constance";
 import {
   load_Band,
-  load_BandDelta,
+  load_BandSnapshot,
   load_Deposit,
   load_DetailedTrade,
   load_UserStatus,
@@ -110,17 +110,12 @@ export function handleTokenExchange(event: TokenExchange): void {
   while (true) {
     let cur_band = BigInt.fromI32(n1);
     let band = load_Band(SFRXETH_AMM_ID, cur_band);
-    let bandDelta = load_BandDelta(
-      SFRXETH_AMM_ID,
-      cur_band,
-      event.block.timestamp
-    );
     let old_x = band.x;
     let old_y = band.y;
 
     // update band.x band.y
     let retry_bandy_times = 0;
-    while (retry_bandy_times < 10){
+    while (retry_bandy_times < 10) {
       let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
       if (!callResult.reverted) {
         band.y = callResult.value;
@@ -129,10 +124,11 @@ export function handleTokenExchange(event: TokenExchange): void {
       retry_bandy_times++;
     }
     let retry_bandx_times = 0;
-    while (retry_bandx_times < 10){
+    while (retry_bandx_times < 10) {
       let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
       if (!callResult.reverted) {
         band.x = callResult.value;
+        break;
       }
       retry_bandx_times++;
     }
@@ -144,7 +140,7 @@ export function handleTokenExchange(event: TokenExchange): void {
       // x in y out
       amount_in_left = amount_in_left.minus(dx.abs());
       amount_out_left = amount_out_left.minus(dy.abs());
-      
+
       ticks_in.push(dx.abs());
       ticks_out.push(dy.abs());
 
@@ -159,7 +155,7 @@ export function handleTokenExchange(event: TokenExchange): void {
       // y in x out
       amount_in_left = amount_in_left.minus(dy.abs());
       amount_out_left = amount_out_left.minus(dx.abs());
-      
+
       ticks_in.push(dy.abs());
       ticks_out.push(dx.abs());
 
@@ -174,15 +170,25 @@ export function handleTokenExchange(event: TokenExchange): void {
 
     // @todo update providers sum_x, sum_y
 
-    bandDelta.dx = dx;
-    bandDelta.dy = dy;
-    bandDelta.market_price = market_price;
-    bandDelta.oracle_price = amm.p_o;
-    bandDelta.amm_event_type = "TokenExchange";
+    // update BandSnapshot
+    let bandSnapshot = load_BandSnapshot(
+      SFRXETH_AMM_ID,
+      cur_band,
+      event.block.timestamp
+    );
+    if (bandSnapshot.amm_event_type == "") {
+      bandSnapshot.x = band.x;
+      bandSnapshot.y = band.y;
+      bandSnapshot.market_price = market_price;
+      bandSnapshot.oracle_price = amm.p_o;
+      bandSnapshot.amm_event_type = "TokenExchange";
+    } else {
+      bandSnapshot.amm_event_type += "_TokenExchange";
+    }
 
-    bandDelta.save();
+    bandSnapshot.save();
+
     band.save();
-
   }
 
   // trade from n1 to n2
@@ -234,14 +240,50 @@ export function handleDeposit(event: Deposit): void {
   let market_price = getSfrxETHMarketPrice()[0];
   if (market_price.isZero()) market_price = amm.p_o;
 
-  let per_y = amount.div(N);
-  for (let i = n1; i <= n2; i = i.plus(BigInt.fromI32(1))) {
-    let bandDelta = load_BandDelta(SFRXETH_AMM_ID, i, event.block.timestamp);
-    bandDelta.dy = per_y;
-    bandDelta.market_price = market_price;
-    bandDelta.oracle_price = amm.p_o;
-    bandDelta.amm_event_type = "Deposit";
-    bandDelta.save();
+  let i = n1.toI32();
+  while (i <= n2.toI32()) {
+    let cur_band = BigInt.fromI32(i);
+    let band = load_Band(SFRXETH_AMM_ID, cur_band);
+    let old_x = band.x;
+    let old_y = band.y;
+
+    // update band.x band.y
+    let retry_bandy_times = 0;
+    while (retry_bandy_times < 10) {
+      let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
+      if (!callResult.reverted) {
+        band.y = callResult.value;
+        break;
+      }
+      retry_bandy_times++;
+    }
+    let retry_bandx_times = 0;
+    while (retry_bandx_times < 10) {
+      let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
+      if (!callResult.reverted) {
+        band.x = callResult.value;
+        break;
+      }
+      retry_bandx_times++;
+    }
+
+    // update BandSnapshot
+    let bandSnapshot = load_BandSnapshot(
+      SFRXETH_AMM_ID,
+      cur_band,
+      event.block.timestamp
+    );
+    if (bandSnapshot.amm_event_type == "") {
+      bandSnapshot.x = band.x;
+      bandSnapshot.y = band.y;
+      bandSnapshot.market_price = market_price;
+      bandSnapshot.oracle_price = amm.p_o;
+      bandSnapshot.amm_event_type = "Deposit";
+    } else {
+      bandSnapshot.amm_event_type += "_Deposit";
+    }
+    bandSnapshot.save();
+    i++;
   }
 
   amm.save();
@@ -264,6 +306,54 @@ export function handleWithdraw(event: Withdraw): void {
 
   let amm = load_sFrxETHAMM();
   amm.withdraws = insertUniqueElementFromArray(entity.id, amm.withdraws);
+
+  let i = user_status.n1.toI32();
+  while (i <= user_status.n2.toI32()) {
+    let cur_band = BigInt.fromI32(i);
+    let band = load_Band(SFRXETH_AMM_ID, cur_band);
+    let old_x = band.x;
+    let old_y = band.y;
+
+    // update band.x band.y
+    let retry_bandy_times = 0;
+    while (retry_bandy_times < 10) {
+      let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
+      if (!callResult.reverted) {
+        band.y = callResult.value;
+        break;
+      }
+      retry_bandy_times++;
+    }
+    let retry_bandx_times = 0;
+    while (retry_bandx_times < 10) {
+      let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
+      if (!callResult.reverted) {
+        band.x = callResult.value;
+        break;
+      }
+      retry_bandx_times++;
+    }
+
+    // delta band x,y
+    let bandSnapshot = load_BandSnapshot(
+      SFRXETH_AMM_ID,
+      cur_band,
+      event.block.timestamp
+    );
+    if (bandSnapshot.amm_event_type == "") {
+      bandSnapshot.x = band.x;
+      bandSnapshot.y = band.y;
+      bandSnapshot.market_price = getSfrxETHMarketPrice()[0];
+      bandSnapshot.oracle_price = amm.p_o;
+      bandSnapshot.amm_event_type = "Withdraw";
+    } else {
+      bandSnapshot.amm_event_type += "_Withdraw";
+    }
+    bandSnapshot.save();
+
+    i++;
+  }
+
   amm.save();
 
   entity.save();

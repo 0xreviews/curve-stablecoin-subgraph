@@ -12,7 +12,6 @@ import {
 } from "../generated/sFrxETHController/sFrxETHController";
 import {
   load_Band,
-  load_BandDelta,
   load_Borrow,
   load_Liquidate,
   load_RemoveCollateral,
@@ -29,7 +28,6 @@ import {
   removeElementFromArray,
 } from "./utils/utils";
 import { sFrxETHAMM } from "../generated/sFrxETHAMM/sFrxETHAMM";
-import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(
   Address.fromString(sFrxETHAMMAddress)
@@ -61,7 +59,6 @@ export function handleUserState(event: UserState): void {
   amm.min_band = n1.lt(amm.min_band) ? n1 : amm.min_band;
   amm.max_band = n2.gt(amm.max_band) ? n2 : amm.max_band;
 
-  let ammEventType = getAMMEventType(event);
 
   let ticks: string[] = [];
 
@@ -104,6 +101,7 @@ export function handleUserState(event: UserState): void {
       let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
       if (!callResult.reverted) {
         band.x = callResult.value;
+        break;
       }
       retry_bandx_times++;
     }
@@ -159,23 +157,6 @@ export function handleUserState(event: UserState): void {
         user_status.id,
         band.providers
       );
-    }
-
-    // Only Withdraw event update bandelta,
-    // Deposits and TokenExchange have already updated.
-    if (ammEventType === 'Withdraw') {
-      // delta band x,y
-      let bandDelta = load_BandDelta(
-        SFRXETH_AMM_ID,
-        cur_band,
-        event.block.timestamp
-      );
-      bandDelta.dx = band.x.minus(old_x);
-      bandDelta.dy = band.y.minus(old_y);
-      bandDelta.market_price = getSfrxETHMarketPrice()[0];
-      bandDelta.oracle_price = amm.p_o;
-      bandDelta.amm_event_type = ammEventType;
-      bandDelta.save();
     }
 
     band.save();

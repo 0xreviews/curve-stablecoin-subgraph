@@ -91,8 +91,8 @@ type AMM @entity {
   withdraws: [Withdraw!]!
   sum_x: BigInt! # uint256
   sum_y: BigInt! # uint256
-  user_count: BigInt! # uint256
-  trade_count: BigInt! # uint256
+  user_count: BigInt! # count for id
+  trade_count: BigInt! # count for id
 }
 
 type Deposit @entity {
@@ -159,12 +159,12 @@ type Liquidate @entity {
   tx: Bytes! # tx hash
 }
 
-type BandDelta @entity {
+type BandSnapshot @entity {
   id: ID! # AMMID_BandIndex_timestamp
   AMM: AMM!
   index: BigInt! # uint256
-  dx: BigInt! # uint256
-  dy: BigInt! # uint256
+  x: BigInt! # uint256
+  y: BigInt! # uint256
   market_price: BigInt! # uint256
   oracle_price: BigInt! # uint256
   amm_event_type: String! # Deposit|Wtithdraw|TokenExchange

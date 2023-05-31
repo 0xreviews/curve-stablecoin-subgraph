@@ -18,7 +18,7 @@ import {
   Repay,
   RemoveCollateral,
   Liquidate,
-  BandDelta,
+  BandSnapshot,
 } from "../../generated/schema";
 import { initAddressZero } from "./utils";
 import {
@@ -427,23 +427,23 @@ export function load_Liquidate(
   return entity;
 }
 
-export function load_BandDelta(
+export function load_BandSnapshot(
   AMMID: string,
   index: BigInt,
   ts: BigInt
-): BandDelta {
+): BandSnapshot {
   let id = AMMID.toString() + "_" + index.toHexString() + "_" + ts.toString();
-  let entity = BandDelta.load(id);
+  let entity = BandSnapshot.load(id);
   if (entity == null) {
-    entity = new BandDelta(id);
+    entity = new BandSnapshot(id);
     if (AMMID == SFRXETH_AMM_ID) {
       entity.AMM = load_sFrxETHAMM().id;
     } else {
       entity.AMM = load_sFrxETHAMM().id;
     }
     entity.index = index;
-    entity.dx = BigInt.fromI32(0);
-    entity.dy = BigInt.fromI32(0);
+    entity.x = BigInt.fromI32(0);
+    entity.y = BigInt.fromI32(0);
     entity.market_price = BigInt.fromI32(0);
     entity.oracle_price = BigInt.fromI32(0);
     entity.amm_event_type = "";

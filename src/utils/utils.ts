@@ -1,4 +1,4 @@
-import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { INT_DECIMAL } from "../constance";
 import { sFrxETHAMM } from "../../generated/sFrxETHAMM/sFrxETHAMM";
 import { sFrxETHAMMAddress } from "../deployment";
@@ -113,8 +113,11 @@ export function p_oracle_up(n: BigInt, base_price: BigInt): BigInt {
 
 export function getAMMEventType(event: ethereum.Event): string {
   let ammEventType = "";
-  const tx_logs: ethereum.Log[] = (event.receipt as ethereum.TransactionReceipt)
-    .logs;
+  const tx_logs: ethereum.Log[] = (event.receipt as ethereum.TransactionReceipt).logs;
+  if (tx_logs.length > 0) {
+    log.warning("tx_logs", [tx_logs[0].logType.toString(), tx_logs[0].logType.toLowerCase()])
+  }
+
   for (let i = 0; i < tx_logs.length; i++) {
     if (tx_logs[i].logType.toLowerCase() == "deposit") {
       ammEventType = "Deposit";
@@ -129,4 +132,3 @@ export function getAMMEventType(event: ethereum.Event): string {
   }
   return ammEventType;
 }
-

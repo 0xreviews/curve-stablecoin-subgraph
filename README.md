@@ -58,10 +58,10 @@ npm run test
     x
     y
   }
-  bandDeltas(first: 10, orderBy: timestamp) {
+  bandSnapshots(first: 10, orderBy: timestamp) {
     index
-    dx
-    dy
+    x
+    y
     market_price
     timestamp
   }
