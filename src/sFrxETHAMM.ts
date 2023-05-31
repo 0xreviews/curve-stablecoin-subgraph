@@ -35,10 +35,10 @@ export function handleTokenExchange(event: TokenExchange): void {
 
   let amm = load_sFrxETHAMM();
 
-  // skip band
-  if (amm.trade_count.isZero()) {
-    if (amm.active_band.gt(amm.min_band)) amm.active_band = amm.min_band;
-  }
+  // // skip band
+  // if (amm.trade_count.isZero()) {
+  //   if (amm.active_band.gt(amm.min_band)) amm.active_band = amm.min_band;
+  // }
 
   // price out
   {
@@ -107,8 +107,9 @@ export function handleTokenExchange(event: TokenExchange): void {
   let ticks_in: BigInt[] = [];
   let ticks_out: BigInt[] = [];
 
+  let i = n1;
   while (true) {
-    let cur_band = BigInt.fromI32(n1);
+    let cur_band = BigInt.fromI32(i);
     let band = load_Band(SFRXETH_AMM_ID, cur_band);
     let old_x = band.x;
     let old_y = band.y;
@@ -145,12 +146,11 @@ export function handleTokenExchange(event: TokenExchange): void {
       ticks_out.push(dy.abs());
 
       if (
-        n1 <= amm.min_band.toI32() ||
-        amount_out_left.isZero() ||
-        amount_out_left.lt(BigInt.fromI32(0))
+        i >= amm.max_band.toI32() ||
+        i >= n2
       )
         break;
-      n1 -= 1;
+      i += 1;
     } else {
       // y in x out
       amount_in_left = amount_in_left.minus(dy.abs());
@@ -160,12 +160,11 @@ export function handleTokenExchange(event: TokenExchange): void {
       ticks_out.push(dx.abs());
 
       if (
-        n1 >= amm.min_band.toI32() ||
-        amount_out_left.isZero() ||
-        amount_out_left.lt(BigInt.fromI32(0))
+        i <= amm.min_band.toI32() ||
+        i <= n2
       )
         break;
-      n1 += 1;
+      i -= 1;
     }
 
     // @todo update providers sum_x, sum_y
@@ -176,11 +175,11 @@ export function handleTokenExchange(event: TokenExchange): void {
       cur_band,
       event.block.timestamp
     );
+    bandSnapshot.x = band.x;
+    bandSnapshot.y = band.y;
+    bandSnapshot.market_price = market_price;
+    bandSnapshot.oracle_price = amm.p_o;
     if (bandSnapshot.amm_event_type == "") {
-      bandSnapshot.x = band.x;
-      bandSnapshot.y = band.y;
-      bandSnapshot.market_price = market_price;
-      bandSnapshot.oracle_price = amm.p_o;
       bandSnapshot.amm_event_type = "TokenExchange";
     } else {
       bandSnapshot.amm_event_type += "_TokenExchange";
@@ -273,11 +272,11 @@ export function handleDeposit(event: Deposit): void {
       cur_band,
       event.block.timestamp
     );
+    bandSnapshot.x = band.x;
+    bandSnapshot.y = band.y;
+    bandSnapshot.market_price = market_price;
+    bandSnapshot.oracle_price = amm.p_o;
     if (bandSnapshot.amm_event_type == "") {
-      bandSnapshot.x = band.x;
-      bandSnapshot.y = band.y;
-      bandSnapshot.market_price = market_price;
-      bandSnapshot.oracle_price = amm.p_o;
       bandSnapshot.amm_event_type = "Deposit";
     } else {
       bandSnapshot.amm_event_type += "_Deposit";
@@ -340,11 +339,11 @@ export function handleWithdraw(event: Withdraw): void {
       cur_band,
       event.block.timestamp
     );
+    bandSnapshot.x = band.x;
+    bandSnapshot.y = band.y;
+    bandSnapshot.market_price = getSfrxETHMarketPrice()[0];
+    bandSnapshot.oracle_price = amm.p_o;
     if (bandSnapshot.amm_event_type == "") {
-      bandSnapshot.x = band.x;
-      bandSnapshot.y = band.y;
-      bandSnapshot.market_price = getSfrxETHMarketPrice()[0];
-      bandSnapshot.oracle_price = amm.p_o;
       bandSnapshot.amm_event_type = "Withdraw";
     } else {
       bandSnapshot.amm_event_type += "_Withdraw";

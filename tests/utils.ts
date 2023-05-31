@@ -103,3 +103,21 @@ query Bands($size: Int!, $begin_band: Int!, $end_band: Int!) {
   }
 }
 `;
+
+export const BADNDSNAPSHOTS_QUERY = `
+query BandSnapshots($skip: Int!, $size: Int!) {
+  bandSnapshots(
+    skip: $skip,
+    first: $size,
+    orderBy: timestamp,
+  ) {
+    index
+    x
+    y
+    market_price
+    oracle_price
+    amm_event_type
+    timestamp
+  }
+}
+`;
