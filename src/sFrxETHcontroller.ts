@@ -23,7 +23,6 @@ import {
 import { INT_DECIMAL, SFRXETH_AMM_ID } from "./constance";
 import { sFrxETHAMMAddress, sFrxETHControllerAddress } from "./deployment";
 import {
-  getAMMEventType,
   insertUniqueElementFromArray,
   removeElementFromArray,
 } from "./utils/utils";
@@ -59,7 +58,6 @@ export function handleUserState(event: UserState): void {
   amm.min_band = n1.lt(amm.min_band) ? n1 : amm.min_band;
   amm.max_band = n2.gt(amm.max_band) ? n2 : amm.max_band;
 
-
   let ticks: string[] = [];
 
   let xs: BigInt[] = [];
@@ -83,12 +81,10 @@ export function handleUserState(event: UserState): void {
       cur_band
     );
     let old_total_share = total_shares.share;
-    const old_x = band.x;
-    const old_y = band.y;
 
     // update band.x band.y
     let retry_bandy_times = 0;
-    while (retry_bandy_times < 10){
+    while (retry_bandy_times < 10) {
       let callResult = sFrxETHAMMContract.try_bands_y(cur_band);
       if (!callResult.reverted) {
         band.y = callResult.value;
@@ -97,7 +93,7 @@ export function handleUserState(event: UserState): void {
       retry_bandy_times++;
     }
     let retry_bandx_times = 0;
-    while (retry_bandx_times < 10){
+    while (retry_bandx_times < 10) {
       let callResult = sFrxETHAMMContract.try_bands_x(cur_band);
       if (!callResult.reverted) {
         band.x = callResult.value;

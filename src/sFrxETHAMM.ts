@@ -35,10 +35,10 @@ export function handleTokenExchange(event: TokenExchange): void {
 
   let amm = load_sFrxETHAMM();
 
-  // // skip band
-  // if (amm.trade_count.isZero()) {
-  //   if (amm.active_band.gt(amm.min_band)) amm.active_band = amm.min_band;
-  // }
+  // skip band
+  if (amm.trade_count.isZero()) {
+    if (amm.active_band.gt(amm.min_band)) amm.active_band = amm.min_band;
+  }
 
   // price out
   {
@@ -147,10 +147,12 @@ export function handleTokenExchange(event: TokenExchange): void {
 
       if (
         i >= amm.max_band.toI32() ||
-        i >= n2
+        // i >= n2
+        (!old_y.isZero() && old_y.equals(band.y))
       )
         break;
       i += 1;
+      n2 = i;
     } else {
       // y in x out
       amount_in_left = amount_in_left.minus(dy.abs());
@@ -161,10 +163,12 @@ export function handleTokenExchange(event: TokenExchange): void {
 
       if (
         i <= amm.min_band.toI32() ||
-        i <= n2
+        // i <= n2
+        (!old_x.isZero() && old_x.equals(band.x))
       )
         break;
       i -= 1;
+      n2 = i;
     }
 
     // @todo update providers sum_x, sum_y
@@ -184,7 +188,6 @@ export function handleTokenExchange(event: TokenExchange): void {
     } else {
       bandSnapshot.amm_event_type += "_TokenExchange";
     }
-
     bandSnapshot.save();
 
     band.save();
@@ -243,8 +246,6 @@ export function handleDeposit(event: Deposit): void {
   while (i <= n2.toI32()) {
     let cur_band = BigInt.fromI32(i);
     let band = load_Band(SFRXETH_AMM_ID, cur_band);
-    let old_x = band.x;
-    let old_y = band.y;
 
     // update band.x band.y
     let retry_bandy_times = 0;
