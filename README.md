@@ -14,7 +14,7 @@ deploy to TheGraph hosted-service
 npm run auto-deploy
 ```
 
-test graph data by on-chain data.
+test graph data with on-chain data.
 
 ```sh
 npm run test
@@ -32,8 +32,10 @@ npm run test
     p_o
     trade_count
     user_count
-    user_shares(first: 10) {
+    user_shares(first: 5, orderBy: sum_y, orderDirection: desc) {
       user
+      sum_x
+      sum_y
       n1
       n2
     }
@@ -53,12 +55,12 @@ npm run test
     ticks_in
     ticks_out
   }
-  bands(first: 50, orderBy: index) {
+  bands(first: 5, orderBy: index) {
     index
     x
     y
   }
-  bandSnapshots(first: 10, orderBy: timestamp) {
+  bandSnapshots(first: 5, orderBy: timestamp) {
     index
     x
     y
