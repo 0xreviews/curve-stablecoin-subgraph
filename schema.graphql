@@ -57,6 +57,7 @@ type DetailedTrade @entity {
   n2: BigInt! # int256
   ticks_in: [BigInt!]! # uint256[]
   ticks_out: [BigInt!]! # uint256[]
+  tx: Bytes! # tx hash
   timestamp: BigInt! # block.timestamp
 }
 
@@ -169,5 +170,12 @@ type BandSnapshot @entity {
   oracle_price: BigInt! # uint256
   amm_event_type: String! # Deposit|Wtithdraw|TokenExchange
   # trigger_id: String! # ID!
+  timestamp: BigInt! # timestamp
+}
+
+type RateSnapshot @entity {
+  id: ID! # AMMID_timestamp
+  AMM: AMM!
+  rate: BigInt! # rate snapshot value
   timestamp: BigInt! # timestamp
 }

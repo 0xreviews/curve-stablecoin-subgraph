@@ -35,6 +35,8 @@ dataSources:
           file: ./abis/sFrxETHChainlink.json
         - name: sFrxETHSwapPool
           file: ./abis/sFrxETHSwapPool.json
+        - name: AggMonetaryPolicy
+          file: ./abis/AggMonetaryPolicy.json
       eventHandlers:
         - event: UserState(indexed address,uint256,uint256,int256,int256,uint256)
           handler: handleUserState
@@ -84,6 +86,8 @@ dataSources:
           file: ./abis/sFrxETHChainlink.json
         - name: sFrxETHSwapPool
           file: ./abis/sFrxETHSwapPool.json
+        - name: AggMonetaryPolicy
+          file: ./abis/AggMonetaryPolicy.json
       eventHandlers:
         - event: TokenExchange(indexed address,uint256,uint256,uint256,uint256)
           handler: handleTokenExchange
@@ -181,4 +185,25 @@ dataSources:
       eventHandlers:
         - event: EmptyEvent()
           handler: handleEmptyEvent
+      file: ./src/emptyHandler.ts
+  
+  - kind: ethereum
+    name: AggMonetaryPolicy
+    network: mainnet
+    source:
+      address: "0xc684432FD6322c6D58b6bC5d28B18569aA0AD0A1"
+      abi: AggMonetaryPolicy
+      startBlock: 17258055
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - SetRate
+      abis:
+        - name: AggMonetaryPolicy
+          file: ./abis/AggMonetaryPolicy.json
+      eventHandlers:
+        - event: SetRate(uint256)
+          handler: handleSetRate
       file: ./src/emptyHandler.ts

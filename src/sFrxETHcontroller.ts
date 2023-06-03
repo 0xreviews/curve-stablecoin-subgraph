@@ -14,6 +14,7 @@ import {
   load_Band,
   load_Borrow,
   load_Liquidate,
+  load_RateSnapshot,
   load_RemoveCollateral,
   load_Repay,
   load_Share,
@@ -27,6 +28,7 @@ import {
   removeElementFromArray,
 } from "./utils/utils";
 import { sFrxETHAMM } from "../generated/sFrxETHAMM/sFrxETHAMM";
+import { getRate } from "./utils/callContractRes";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(
   Address.fromString(sFrxETHAMMAddress)
@@ -180,6 +182,15 @@ export function handleUserState(event: UserState): void {
     if (!callResult.reverted) {
       amm.user_count = callResult.value;
     }
+  }
+
+  // update rate
+  let rateSnapshot = load_RateSnapshot(SFRXETH_AMM_ID, event.block.timestamp);
+  let rate = getRate();
+  if (!rate.isZero()) {
+    amm.rate = rate;
+    rateSnapshot.rate = rate;
+    rateSnapshot.save();
   }
 
   user_status.save();

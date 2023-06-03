@@ -19,6 +19,7 @@ import {
   RemoveCollateral,
   Liquidate,
   BandSnapshot,
+  RateSnapshot,
 } from "../../generated/schema";
 import { initAddressZero } from "./utils";
 import {
@@ -124,6 +125,7 @@ export function load_DetailedTrade(
     entity.n2 = BigInt.fromI32(0);
     entity.ticks_in = [];
     entity.ticks_out = [];
+    entity.tx = Bytes.empty();
     entity.timestamp = BigInt.fromI32(0);
   }
   return entity;
@@ -227,7 +229,7 @@ function _initAMMEntity(AMMContract: sFrxETHAMM, entity: AMM): AMM {
     if (!callResult.reverted) {
       entity.rate = callResult.value;
     } else {
-      entity.rate = BigInt.fromString("1040334742");
+      entity.rate = BigInt.fromString("3022265993"); // policy init arg rate0
     }
   }
 
@@ -452,3 +454,23 @@ export function load_BandSnapshot(
   }
   return entity;
 }
+
+export function load_RateSnapshot(
+  AMMID: string,
+  ts: BigInt
+): RateSnapshot {
+  let id = AMMID.toString() + "_" + ts.toString();
+  let entity = RateSnapshot.load(id);
+  if (entity == null) {
+    entity = new RateSnapshot(id);
+    if (AMMID == SFRXETH_AMM_ID) {
+      entity.AMM = load_sFrxETHAMM().id;
+    } else {
+      entity.AMM = load_sFrxETHAMM().id;
+    }
+    entity.rate = BigInt.fromI32(0);
+    entity.timestamp = ts;
+  }
+  return entity;
+}
+

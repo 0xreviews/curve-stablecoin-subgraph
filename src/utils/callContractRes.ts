@@ -3,11 +3,13 @@ import { sFrxETHAMM } from "../../generated/sFrxETHAMM/sFrxETHAMM";
 import { sFrxETH } from "../../generated/sFrxETH/sFrxETH";
 import { sFrxETHChainlink } from "../../generated/sFrxETHChainlink/sFrxETHChainlink";
 import { sFrxETHSwapPool } from "../../generated/sFrxETHSwapPool/sFrxETHSwapPool";
+import { AggMonetaryPolicy } from "../../generated/AggMonetaryPolicy/AggMonetaryPolicy";
 import {
   sFrxETHAMMAddress,
   sFrxETHAddress,
   sFrxETHChainlinkAddress,
   sFrxETHSwapPoolAddress,
+  aggMonetaryPolicyAddress,
 } from "../deployment";
 import { INT_DECIMAL } from "../constance";
 import { CHAINLINK_PRICE_PRECISION } from "../constance";
@@ -25,6 +27,21 @@ const sFrxETHChainlinkContract = sFrxETHChainlink.bind(
 const sFrxETHSwapPoolContract = sFrxETHSwapPool.bind(
   Address.fromString(sFrxETHSwapPoolAddress)
 );
+
+const aggMonetaryPolicyContract = AggMonetaryPolicy.bind(
+  Address.fromString(aggMonetaryPolicyAddress)
+);
+
+export function getRate(): BigInt {
+  let rate = BigInt.fromI32(0);
+  {
+    let callResult = aggMonetaryPolicyContract.try_rate();
+    if (!callResult.reverted) {
+      rate = callResult.value;
+    }
+  }
+  return rate;
+}
 
 export function getSfrxETHMarketPrice(): BigInt[] {
   // chainlink_price (ETH/USD)
@@ -70,5 +87,5 @@ export function getSfrxETHMarketPrice(): BigInt[] {
       .div(INT_DECIMAL);
   }
 
-  return [ market_price, chainlink_price, frxETHPrice, price_per_share ];
+  return [market_price, chainlink_price, frxETHPrice, price_per_share];
 }

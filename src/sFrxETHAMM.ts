@@ -14,13 +14,14 @@ import {
   load_BandSnapshot,
   load_Deposit,
   load_DetailedTrade,
+  load_RateSnapshot,
   load_UserStatus,
   load_Withdraw,
   load_sFrxETHAMM,
 } from "./utils/loadOrCreateEntity";
 import { sFrxETHAMMAddress } from "./deployment";
 import { insertUniqueElementFromArray } from "./utils/utils";
-import { getSfrxETHMarketPrice } from "./utils/getSfrxETHMarketPrice";
+import { getRate, getSfrxETHMarketPrice } from "./utils/callContractRes";
 
 const sFrxETHAMMContract = sFrxETHAMM.bind(
   Address.fromString(sFrxETHAMMAddress)
@@ -209,6 +210,16 @@ export function handleTokenExchange(event: TokenExchange): void {
     amm.sum_x = amm.sum_x.minus(tokens_bought);
     amm.sum_y = amm.sum_y.plus(tokens_sold);
   }
+
+  // update rate
+  let rateSnapshot = load_RateSnapshot(SFRXETH_AMM_ID, event.block.timestamp);
+  let rate = getRate();
+  if (!rate.isZero()) {
+    amm.rate = rate;
+    rateSnapshot.rate = rate;
+    rateSnapshot.save();
+  }
+
   // @todo fees_x, fees_y
 
   trade.save();
