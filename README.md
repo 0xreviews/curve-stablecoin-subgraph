@@ -67,5 +67,9 @@ npm run test
     market_price
     timestamp
   }
+  rateSnapshots(first: 5, orderBy: timestamp) {
+    rate
+    timestamp
+  }
 }
 ```

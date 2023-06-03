@@ -121,3 +121,16 @@ query BandSnapshots($skip: Int!, $size: Int!) {
   }
 }
 `;
+
+export const RATESNAPSHOTS_QUERY = `
+query RateSnapshots($skip: Int!, $size: Int!) {
+  rateSnapshots(
+    skip: $skip,
+    first: $size,
+    orderBy: timestamp,
+  ) {
+    rate
+    timestamp
+  }
+}
+`;
