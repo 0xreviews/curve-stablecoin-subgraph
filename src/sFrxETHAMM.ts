@@ -89,6 +89,8 @@ export function handleTokenExchange(event: TokenExchange): void {
   trade.oracle_price = amm.p_o;
   trade.market_price = market_price;
   trade.profit_rate = profit_rate;
+  trade.tx = event.transaction.hash;
+  trade.timestamp = event.block.timestamp;
 
   // target active band
   let n2 = amm.active_band.toI32();

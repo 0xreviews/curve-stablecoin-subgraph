@@ -32,13 +32,6 @@ npm run test
     p_o
     trade_count
     user_count
-    user_shares(first: 5, orderBy: sum_y, orderDirection: desc) {
-      user
-      sum_x
-      sum_y
-      n1
-      n2
-    }
   }
   detailedTrades(first: 5, orderBy: timestamp, orderDirection: desc) {
     id
@@ -54,11 +47,20 @@ npm run test
     n2
     ticks_in
     ticks_out
+    tx
+    timestamp
   }
   bands(first: 5, orderBy: index) {
     index
     x
     y
+  }
+  userStatuses(first: 5, orderBy: sum_y, orderDirection: desc) {
+    user
+    sum_x
+    sum_y
+    n1
+    n2
   }
   bandSnapshots(first: 5, orderBy: timestamp) {
     index
